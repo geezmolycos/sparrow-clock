@@ -15,7 +15,7 @@ package.cpath = string.format("%s;%s/?.%s", package.cpath, lib_path, extension)
 local ffi = require "ffi"
 local inspect = require "inspect"
 local imgui = require "cimgui"
-local mgl = require "MGL"
+local date = require "date"
 
 if ffi.os ~= "Windows" then
     print("OS is not Windows, not implemented")
@@ -39,6 +39,7 @@ love.run = function()
 
     local dt = 0
     local graphics_counter = 0
+    local last_time = date(true)
 
     -- Main loop time.
     return function()
@@ -62,9 +63,13 @@ love.run = function()
         if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
 
         if love.graphics and love.graphics.isActive() then
-            graphics_counter = graphics_counter + 1
-            if graphics_counter == user.graphics_n then
-                graphics_counter = 0
+            local new_time = date(true)
+            if new_time:getseconds() ~= last_time:getseconds() then
+                graphics_counter = 0 -- second update, refresh immediately
+            end
+            last_time = new_time
+            if graphics_counter == 0 then
+                graphics_counter = user.graphics_n
                 love.graphics.origin()
                 love.graphics.clear(love.graphics.getBackgroundColor())
 
@@ -72,6 +77,7 @@ love.run = function()
 
                 love.graphics.present()
             end
+            graphics_counter = graphics_counter - 1
         end
 
         if love.timer then love.timer.sleep(user.event_delay) end
