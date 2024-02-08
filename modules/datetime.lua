@@ -16,7 +16,7 @@ end
 function datetime.draw(it, name, user, state)
     love.graphics.setColor(unpack(it.color))
     love.graphics.setFont(it.font)
-    local str = os.date(it.format, state.time)
+    local str = state.datetime:fmt(it.format)
     if it.right then
         love.graphics.print(str, it.dim[1] - it.font:getWidth(str), 0)
     else

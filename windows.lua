@@ -2,7 +2,6 @@ local windows = {}
 
 local ffi = require "ffi"
 
-ffi.load('user32.dll')
 local comctl32 = ffi.load('comctl32.dll')
 
 ffi.cdef[[

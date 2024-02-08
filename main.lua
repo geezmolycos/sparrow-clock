@@ -17,7 +17,13 @@ local inspect = require "inspect"
 local imgui = require "cimgui"
 local mgl = require "MGL"
 
+if ffi.os ~= "Windows" then
+    print("OS is not Windows, not implemented")
+    love.window.showMessageBox( "Warning", "OS is not Windows, not implemented", "warning", false )
+end
+
 local windows = require "windows"
+local windows_time = require "windows_time"
 local user = require "user"
 
 local items = user.config.items
@@ -120,7 +126,7 @@ love.draw = function()
     local timer = love.timer.getTime()
     
     local state = {
-        time = os.time(),
+        datetime = windows_time.get_datetime(),
         last_mouse_moved = last_mouse_moved,
         last_mouse_pressed = last_mouse_pressed,
         timer = timer,
