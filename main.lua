@@ -130,9 +130,11 @@ love.draw = function()
     -- love.graphics.circle('fill', 0, 0, 100)
     
     local timer = love.timer.getTime()
+    local utc_datetime = windows_time.get_datetime()
     
     local state = {
-        datetime = windows_time.get_datetime(),
+        utc_datetime = utc_datetime,
+        local_datetime = utc_datetime:tolocal(),
         last_mouse_moved = last_mouse_moved,
         last_mouse_pressed = last_mouse_pressed,
         timer = timer,
