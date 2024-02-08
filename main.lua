@@ -109,6 +109,7 @@ love.mousepressed = function(x, y, button, ...)
     if not imgui.love.GetWantCaptureMouse() then
         -- your code here
         last_mouse_pressed = love.timer.getTime()
+        last_mouse_moved = love.timer.getTime()
         for name, it in ipairs(items) do
             if  it.pos[1] <= x and x < it.pos[1] + it.dim[1]
             and it.pos[2] <= y and y < it.pos[2] + it.dim[2] then

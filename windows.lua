@@ -212,12 +212,12 @@ function windows.register_subclass_window_proc(hwnd)
 end
 
 function windows.set_bottom(hwnd)
-    windows.at_bottom = true
     -- set to HWND_BOTTOM
     local result = ffi.C.SetWindowPos(hwnd, ffi.cast("HWND", 1), 0, 0, 0, 0, 0x0013) -- SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
     if result == 0 then
         return ffi.C.GetLastError()
     end
+    windows.at_bottom = true
 end
 
 function windows.set_top(hwnd)
@@ -237,6 +237,10 @@ function windows.hide_taskbar(hwnd)
     end
 end
 
+function windows.get_hwnd()
+    return ffi.C.GetActiveWindow()
+end
+
 function windows.init(user, hittest)
     windows.hittest = hittest
     windows.window_snap_x = user.config.window_snap_x
@@ -249,7 +253,7 @@ function windows.init(user, hittest)
           display = user.config.window_display, x = user.window_x, y = user.window_y,
           highdpi = true, usedpiscale = false }
     )
-    local hwnd = ffi.C.GetActiveWindow()
+    local hwnd = windows.get_hwnd()
     print(hwnd)
     if windows.set_layered(hwnd) then
         print("error setting layered window")

@@ -6,6 +6,12 @@ user.config = {
     rows = 8,
     items = {
         {
+            type = "top",
+            at = {18, 0},
+            size = 2,
+            span = {2, 2}
+        },
+        {
             type = "drag",
             at = {20, 0},
             size = 2,
