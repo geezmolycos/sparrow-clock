@@ -28,6 +28,7 @@ user.config = {
             at = {0, 0},
             size = 2,
             span = {24, 2},
+            right = false,
             format = "%Y-%m-%d"
         },
         {
@@ -35,6 +36,7 @@ user.config = {
             at = {0, 2},
             size = 4,
             span = {24, 4},
+            right = false,
             format = "%H:%M:%S"
         }
     },
@@ -46,7 +48,9 @@ user.config = {
     window_anchor_x = 'right',
     window_anchor_y = 'top',
     mouse_moved_active = 1,
-    mouse_pressed_active = 1
+    mouse_pressed_active = 1,
+    event_update_rate = 30,
+    graphics_update_rate = 6
 }
 
 user.window_width = user.config.cols * user.config.grid_size
@@ -68,5 +72,8 @@ end
 
 user.window_snap_offset_x = user.window_x % user.config.window_snap_x
 user.window_snap_offset_y = user.window_y % user.config.window_snap_y
+
+user.event_delay = 1 / user.config.event_update_rate
+user.graphics_n = math.floor(user.config.event_update_rate / user.config.graphics_update_rate)
 
 return user
