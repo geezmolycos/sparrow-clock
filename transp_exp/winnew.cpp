@@ -2,6 +2,7 @@
 // https://gist.github.com/wilkie/3644466
 
 #define _WIN32_WINNT 0x0500
+#include <stdio.h>
 
 #include <windows.h>
 #include <windowsx.h>
@@ -175,7 +176,7 @@ int WINAPI _tWinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR str,int nWi
     }
 
     DWM_BLURBEHIND bb = {0};
-    HRGN hRgn = CreateRectRgn(0, 0, -1, -1);
+    HRGN hRgn = CreateRectRgn(0, 0, w, h);
     bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
     bb.hRgnBlur = hRgn;
     bb.fEnable = TRUE;
@@ -188,6 +189,8 @@ int WINAPI _tWinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR str,int nWi
     initSC();
     resizeSC(w, h);
     ReleaseDC(hWnd, hdc);
+
+    printf("ll: %x", WS_OVERLAPPEDWINDOW);
 
     MSG msg;  
     while(1) {

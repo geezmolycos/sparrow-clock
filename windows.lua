@@ -3,13 +3,13 @@ local windows = {}
 local ffi = require "ffi"
 
 local comctl32 = ffi.load('comctl32.dll')
-local win = ffi.load('win.dll')
+local dwmapi = ffi.load('dwmapi.dll')
 
 ffi.cdef[[
 
 typedef void *HWND;
 typedef void *HMONITOR;
-typedef void *HDC;
+typedef void *HRGN;
 
 typedef int BOOL;
 typedef unsigned long COLORREF;
@@ -25,6 +25,7 @@ typedef uintptr_t ULONG_PTR;
 typedef ULONG_PTR DWORD_PTR;
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
+typedef LONG HRESULT;
 
 typedef LRESULT (*SUBCLASSPROC)(
   HWND hWnd,
@@ -57,17 +58,12 @@ typedef struct tagRECT {
   LONG bottom;
 } RECT, *PRECT, *NPRECT, *LPRECT;
 
-typedef struct _BLENDFUNCTION {
-  BYTE BlendOp;
-  BYTE BlendFlags;
-  BYTE SourceConstantAlpha;
-  BYTE AlphaFormat;
-} BLENDFUNCTION, *PBLENDFUNCTION;
-
-typedef struct tagSIZE {
-  LONG cx;
-  LONG cy;
-} SIZE, *PSIZE, *LPSIZE;
+typedef struct _DWM_BLURBEHIND {
+  DWORD dwFlags;
+  BOOL  fEnable;
+  HRGN  hRgnBlur;
+  BOOL  fTransitionOnMaximized;
+} DWM_BLURBEHIND, *PDWM_BLURBEHIND;
 
 HWND GetActiveWindow(
 
@@ -133,49 +129,35 @@ HMONITOR MonitorFromPoint(
   DWORD dwFlags
 );
 
-BOOL UpdateLayeredWindow(
-  HWND          hWnd,
-  HDC           hdcDst,
-  POINT         *pptDst,
-  SIZE          *psize,
-  HDC           hdcSrc,
-  POINT         *pptSrc,
-  COLORREF      crKey,
-  BLENDFUNCTION *pblend,
-  DWORD         dwFlags
+HRGN CreateRectRgn(
+  int x1,
+  int y1,
+  int x2,
+  int y2
 );
 
-HDC GetDC(
-  HWND hWnd
+HRESULT DwmEnableBlurBehindWindow(
+  HWND                 hWnd,
+  const DWM_BLURBEHIND *pBlurBehind
 );
-
-void paintdc(HDC dc);
 
 ]]
 
--- possible(harder) alternative methods for creating layered window:
--- https://stackoverflow.com/questions/48448739/window-regions-vs-layered-windows
-
--- simple color masking is used here
-function windows.set_layered(hwnd)
+-- use DwmEnableBlurBehindWindow which works on modern windows
+function windows.set_transparent(hwnd, user)
     --local result = ffi.C.SetWindowPos(hwnd, ffi.cast('void*', -1), 0, 0, 0, 0, 3)
     --print("r", result)
-    local orig_ex = ffi.C.GetWindowLongA(hwnd, -20)
-    print("orig ex:", orig_ex)
-    local result = ffi.C.SetWindowLongA(hwnd, -20, bit.bor(orig_ex, 0x00080000)) -- WS_EX_LAYERED
-    local colorref = ffi.cast('COLORREF', 0x00ff00ff)
-    local alpha = ffi.cast('BYTE', 0)
-    local flags = ffi.cast('DWORD', 0x00000001)
-    print(hwnd)
-    local result = ffi.C.SetLayeredWindowAttributes(
-        hwnd,
-        colorref,
-        alpha,
-        flags) -- flags (2: alpha->opacity, 1: colorkey -> transparency color)
-    if result == 0 then
-        return ffi.C.GetLastError()
-    end
-    return nil
+    local orig_style = ffi.C.GetWindowLongA(hwnd, -16)
+    local orig_exstyle = ffi.C.GetWindowLongA(hwnd, -20)
+    orig_style = bit.band(orig_style, bit.bnot(0x00cf0000)) -- WS_OVERLAPPEDWINDOW
+    orig_style = bit.bor(orig_style, 0x80000000)
+    ffi.C.SetWindowLongA(hwnd, -16, orig_style)
+    local bb = ffi.new('DWM_BLURBEHIND[1]')
+    local hRgn = ffi.C.CreateRectRgn(0, 0, user.window_width, user.window_height)
+    bb[0].dwFlags = 3 -- DWM_BB_ENABLE | DWM_BB_BLURREGION
+    bb[0].hRgnBlur = hRgn
+    bb[0].fEnable = true
+    return dwmapi.DwmEnableBlurBehindWindow(hwnd, bb);
 end
 
 function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData)
@@ -269,7 +251,7 @@ function windows.hide_taskbar(hwnd)
 end
 
 function windows.get_hwnd()
-    return windows.hwnd
+    return ffi.C.GetActiveWindow()
 end
 
 function windows.init(user, hittest)
@@ -284,11 +266,10 @@ function windows.init(user, hittest)
           display = user.config.window_display, x = user.window_x, y = user.window_y,
           highdpi = true, usedpiscale = false }
     )
-    windows.hwnd = ffi.C.GetActiveWindow()
     local hwnd = windows.get_hwnd()
     print(hwnd)
-    if windows.set_layered(hwnd) then
-        print("error setting layered window")
+    if windows.set_transparent(hwnd, user) then
+        print("error setting transparent", ffi.C.GetLastError())
     end
     if windows.register_subclass_window_proc(hwnd) then
         print("error registering subcalss proc")
@@ -297,26 +278,8 @@ function windows.init(user, hittest)
     if windows.hide_taskbar(hwnd) then
         print("error hiding taskbar")
     end
-    love.graphics.setBackgroundColor(1, 0, 1, 0)
+    love.graphics.setBackgroundColor(0, 0, 0, 0)
 end
 
-function windows.test_dc()
-    local hwnd = windows.get_hwnd()
-    local hdc_screen = ffi.C.GetDC(nil)
-    local hdc_window = ffi.C.GetDC(hwnd)
-    -- local ptpos = ffi.new('POINT[1]')
-    -- ptpos[0] = {0, 0}
-    -- local size = ffi.new('SIZE[1]')
-    -- size[0] = {24*16, 8*16}
-    -- local ptsrc = ffi.new('POINT[1]')
-    -- ptsrc[0] = {0, 0}
-    -- local blend = ffi.new('BLENDFUNCTION[1]')
-    -- blend[0] = {0}
-    -- print(hwnd, hdc_screen, ptpos, size, hdc_window, ptsrc, 0, blend, 2)
-    -- print('ulw:', ffi.C.UpdateLayeredWindow(hwnd, hdc_screen, ptpos, size, hdc_window, ptsrc, 0, blend, 2))
-    -- print(ffi.C.GetLastError())
-    win.paintdc(hdc_window)
-    print('fa')
-end
 
 return windows
