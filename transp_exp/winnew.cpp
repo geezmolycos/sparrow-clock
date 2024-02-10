@@ -42,7 +42,7 @@ BOOL initSC() {
 
     glEnable(GL_BLEND);             
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(0, 0, 0, 0);
+    glClearColor(1, 0, 0, 0.2);
 
     return 0;
 }
@@ -176,11 +176,11 @@ int WINAPI _tWinMain(HINSTANCE hThisInst, HINSTANCE hPrevInst, LPSTR str,int nWi
     }
 
     DWM_BLURBEHIND bb = {0};
-    HRGN hRgn = CreateRectRgn(0, 0, w, h);
+    HRGN hRgn = CreateRectRgn(0, 0, -1, -1);
     bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
     bb.hRgnBlur = hRgn;
     bb.fEnable = TRUE;
-    DwmEnableBlurBehindWindow(hWnd, &bb);
+    printf("out: %ld\n", DwmEnableBlurBehindWindow(hWnd, &bb));
     
     CreateHGLRC(hWnd);
 

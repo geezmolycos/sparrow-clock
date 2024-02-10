@@ -9,7 +9,6 @@ function datetime.init(it, name, user)
     it.size_px = it.size * user.config.grid_size
     it.font_family = it.font_family or "mono"
     it.font = love.graphics.newFont(it.size_px, it.font_family)
-    it.font:setFilter("nearest")
     it.right = it.right or false
 end
 

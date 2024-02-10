@@ -112,9 +112,7 @@ love.load = function()
     windows.init(user, hittest)
     imgui.love.Init() -- or imgui.love.Init("RGBA32") or imgui.love.Init("Alpha8")
     
-    love.graphics.setDefaultFilter('nearest', 'nearest', 0)
     local font = love.graphics.newFont(user.config.grid_size, "mono")
-    font:setFilter("nearest")
     love.graphics.setFont(font)
     
     for name, it in ipairs(items) do

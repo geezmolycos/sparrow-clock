@@ -144,7 +144,7 @@ HRESULT DwmEnableBlurBehindWindow(
 ]]
 
 -- use DwmEnableBlurBehindWindow which works on modern windows
-function windows.set_transparent(hwnd, user)
+function windows.set_transparent(hwnd)
     --local result = ffi.C.SetWindowPos(hwnd, ffi.cast('void*', -1), 0, 0, 0, 0, 3)
     --print("r", result)
     local orig_style = ffi.C.GetWindowLongA(hwnd, -16)
@@ -153,7 +153,7 @@ function windows.set_transparent(hwnd, user)
     orig_style = bit.bor(orig_style, 0x80000000)
     ffi.C.SetWindowLongA(hwnd, -16, orig_style)
     local bb = ffi.new('DWM_BLURBEHIND[1]')
-    local hRgn = ffi.C.CreateRectRgn(0, 0, user.window_width, user.window_height)
+    local hRgn = ffi.C.CreateRectRgn(0, 0, -1, -1)
     bb[0].dwFlags = 3 -- DWM_BB_ENABLE | DWM_BB_BLURREGION
     bb[0].hRgnBlur = hRgn
     bb[0].fEnable = true
@@ -268,7 +268,7 @@ function windows.init(user, hittest)
     )
     local hwnd = windows.get_hwnd()
     print(hwnd)
-    if windows.set_transparent(hwnd, user) then
+    if windows.set_transparent(hwnd) ~= 0 then
         print("error setting transparent", ffi.C.GetLastError())
     end
     if windows.register_subclass_window_proc(hwnd) then
