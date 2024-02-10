@@ -3,11 +3,13 @@ local windows = {}
 local ffi = require "ffi"
 
 local comctl32 = ffi.load('comctl32.dll')
+local win = ffi.load('win.dll')
 
 ffi.cdef[[
 
 typedef void *HWND;
 typedef void *HMONITOR;
+typedef void *HDC;
 
 typedef int BOOL;
 typedef unsigned long COLORREF;
@@ -54,6 +56,18 @@ typedef struct tagRECT {
   LONG right;
   LONG bottom;
 } RECT, *PRECT, *NPRECT, *LPRECT;
+
+typedef struct _BLENDFUNCTION {
+  BYTE BlendOp;
+  BYTE BlendFlags;
+  BYTE SourceConstantAlpha;
+  BYTE AlphaFormat;
+} BLENDFUNCTION, *PBLENDFUNCTION;
+
+typedef struct tagSIZE {
+  LONG cx;
+  LONG cy;
+} SIZE, *PSIZE, *LPSIZE;
 
 HWND GetActiveWindow(
 
@@ -119,6 +133,24 @@ HMONITOR MonitorFromPoint(
   DWORD dwFlags
 );
 
+BOOL UpdateLayeredWindow(
+  HWND          hWnd,
+  HDC           hdcDst,
+  POINT         *pptDst,
+  SIZE          *psize,
+  HDC           hdcSrc,
+  POINT         *pptSrc,
+  COLORREF      crKey,
+  BLENDFUNCTION *pblend,
+  DWORD         dwFlags
+);
+
+HDC GetDC(
+  HWND hWnd
+);
+
+void paintdc(HDC dc);
+
 ]]
 
 -- possible(harder) alternative methods for creating layered window:
@@ -130,7 +162,7 @@ function windows.set_layered(hwnd)
     --print("r", result)
     local orig_ex = ffi.C.GetWindowLongA(hwnd, -20)
     print("orig ex:", orig_ex)
-    local result = ffi.C.SetWindowLongA(hwnd, -20, bit.bor(orig_ex, 0x00080000))
+    local result = ffi.C.SetWindowLongA(hwnd, -20, bit.bor(orig_ex, 0x00080000)) -- WS_EX_LAYERED
     local colorref = ffi.cast('COLORREF', 0x00ff00ff)
     local alpha = ffi.cast('BYTE', 0)
     local flags = ffi.cast('DWORD', 0x00000001)
@@ -237,7 +269,7 @@ function windows.hide_taskbar(hwnd)
 end
 
 function windows.get_hwnd()
-    return ffi.C.GetActiveWindow()
+    return windows.hwnd
 end
 
 function windows.init(user, hittest)
@@ -252,6 +284,7 @@ function windows.init(user, hittest)
           display = user.config.window_display, x = user.window_x, y = user.window_y,
           highdpi = true, usedpiscale = false }
     )
+    windows.hwnd = ffi.C.GetActiveWindow()
     local hwnd = windows.get_hwnd()
     print(hwnd)
     if windows.set_layered(hwnd) then
@@ -267,5 +300,23 @@ function windows.init(user, hittest)
     love.graphics.setBackgroundColor(1, 0, 1, 0)
 end
 
+function windows.test_dc()
+    local hwnd = windows.get_hwnd()
+    local hdc_screen = ffi.C.GetDC(nil)
+    local hdc_window = ffi.C.GetDC(hwnd)
+    -- local ptpos = ffi.new('POINT[1]')
+    -- ptpos[0] = {0, 0}
+    -- local size = ffi.new('SIZE[1]')
+    -- size[0] = {24*16, 8*16}
+    -- local ptsrc = ffi.new('POINT[1]')
+    -- ptsrc[0] = {0, 0}
+    -- local blend = ffi.new('BLENDFUNCTION[1]')
+    -- blend[0] = {0}
+    -- print(hwnd, hdc_screen, ptpos, size, hdc_window, ptsrc, 0, blend, 2)
+    -- print('ulw:', ffi.C.UpdateLayeredWindow(hwnd, hdc_screen, ptpos, size, hdc_window, ptsrc, 0, blend, 2))
+    -- print(ffi.C.GetLastError())
+    win.paintdc(hdc_window)
+    print('fa')
+end
 
 return windows
