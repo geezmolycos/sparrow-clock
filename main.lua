@@ -84,7 +84,14 @@ love.run = function()
     end
 end
 
-love.load = function()
+love.load = function(args)
+    if args[1] == 'debug' then
+        user.debug = true
+    end
+    -- for debugging
+    user.time_offset = 0
+    user.time_rate = 1
+
     for name, it in ipairs(items) do
         it.at = it.at or {0, 0}
         it.pos = {
@@ -120,15 +127,34 @@ love.load = function()
     end
 end
 
+local function debug_draw_grid()
+    love.graphics.origin()
+    love.graphics.setColor(1, 1, 1, 0.5)
+    love.graphics.setLineWidth(1)
+    for x = 0, user.config.cols-1 do
+        love.graphics.line(x * user.config.grid_size, 0, x * user.config.grid_size, user.window_height)
+    end
+    for y = 0, user.config.rows-1 do
+        love.graphics.line(0, y * user.config.grid_size, user.window_width, y * user.config.grid_size)
+    end
+    love.graphics.setColor(1, 1, 0, 1)
+    love.graphics.setLineWidth(2)
+    -- draw item boundaries
+    for name, it in ipairs(items) do
+        love.graphics.rectangle('line', it.pos[1], it.pos[2], it.dim[1], it.dim[2])
+    end
+end
+
 love.draw = function()
-    -- code to render imgui
-    imgui.Render()
-    imgui.love.RenderDrawLists()
-    -- love.graphics.setColor(1, 0, 0)
-    -- love.graphics.circle('fill', 0, 0, 100)
     
     local timer = love.timer.getTime()
-    local utc_datetime = windows_time.get_datetime()
+    -- time offset is for debugging
+    local utc_datetime
+    if user.debug then
+        utc_datetime = date{sec = windows_time.get_datetime():spanseconds() * user.time_rate + user.time_offset}
+    else
+        utc_datetime = windows_time.get_datetime()
+    end
     
     local state = {
         utc_datetime = utc_datetime,
@@ -148,9 +174,15 @@ love.draw = function()
         it.module.draw(it, name, user, state)
         love.graphics.pop()
     end
-    if math.random() < 0.001 then
-        print(love.timer.getFPS())
+
+    if user.debug then
+        debug_draw_grid()
     end
+    -- code to render imgui
+    love.graphics.setColor(1, 1, 1)
+    imgui.Render()
+    imgui.love.RenderDrawLists()
+    
 end
 
 love.update = function(dt)
@@ -202,10 +234,60 @@ love.wheelmoved = function(x, y)
     end
 end
 
+local function debug_process_keys(key)
+    local offset = ({
+        e = -60*60*24*((365*4+1)*25-1),
+        r = -60*60*24*365,
+        t = -60*60*24*30,
+        s = -60*60*24,
+        d = -60*60,
+        f = -60,
+        g = -1,
+        h = 1,
+        j = 60,
+        k = 60*60,
+        l = 60*60*24,
+        y = 60*60*24*30,
+        u = 60*60*24*365,
+        i = 60*60*24*((365*4+1)*25-1)
+    })[key]
+    if offset then
+        user.time_offset = user.time_offset + offset
+    end
+    local rate = ({
+        v = 1/4,
+        b = 1/math.sqrt(2),
+        n = math.sqrt(2),
+        m = 4,
+        [','] = 1,
+        ['.'] = 1
+    })[key]
+    if rate then
+        local current_datetime = windows_time.get_datetime()
+        local display_datetime = date{sec = current_datetime:spanseconds() * user.time_rate + user.time_offset}
+        local new_rate = user.time_rate * rate
+        if key == ',' then -- reverse time
+            new_rate = -new_rate
+        end
+        if key == '.' then
+            new_rate = 1 -- normal rate
+        end
+        local new_offset = display_datetime:spanseconds() - current_datetime:spanseconds() * new_rate
+        user.time_offset = new_offset
+        user.time_rate = new_rate
+    end
+    if key == ';' then -- reset
+        user.time_offset = 0
+        user.time_rate = 1
+    end
+end
+
 love.keypressed = function(key, ...)
     imgui.love.KeyPressed(key)
     if not imgui.love.GetWantCaptureKeyboard() then
-        -- your code here 
+        if user.debug then
+            debug_process_keys(key)
+        end
     end
 end
 

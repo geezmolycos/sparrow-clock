@@ -38,6 +38,12 @@ user.config = {
             span = {24, 4},
             right = false,
             format = "%H:%M:%S"
+        },
+        {
+            type = "sun_clock",
+            at = {0, 2},
+            size = 4,
+            span = {24, 4}
         }
     },
     window_display = 2,
