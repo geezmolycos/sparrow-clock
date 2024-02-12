@@ -3,7 +3,7 @@ local close = {}
 close.windows_hit = 'client'
 
 function close.init(it, name, user)
-    it.size = it.size or 1
+    it.size = it.size or it.region[3]
     it.size_px = it.size * user.config.grid_size
 end
 

@@ -7,43 +7,31 @@ user.config = {
     items = {
         {
             type = "top",
-            at = {18, 0},
-            size = 2,
-            span = {2, 2}
+            region = {18, 0, 2, 2}
         },
         {
             type = "drag",
-            at = {20, 0},
-            size = 2,
-            span = {2, 2}
+            region = {20, 0, 2, 2}
         },
         {
             type = "close",
-            at = {22, 0},
-            size = 2,
-            span = {2, 2}
+            region = {22, 0, 2, 2}
         },
         {
             type = "datetime",
-            at = {0, 0},
-            size = 2,
-            span = {24, 2},
+            region = {0, 0, 24, 2},
             right = false,
             format = "%Y-%m-%d"
         },
         {
             type = "datetime",
-            at = {0, 2},
-            size = 4,
-            span = {24, 4},
+            region = {0, 2, 24, 4},
             right = false,
             format = "%H:%M:%S"
         },
         {
             type = "sun_clock",
-            at = {0, 6},
-            size = {24, 2},
-            span = {24, 2}
+            region = {0, 6, 24, 2}
         }
     },
     window_display = 2,

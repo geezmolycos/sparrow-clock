@@ -5,7 +5,7 @@ datetime.windows_hit = 'client'
 function datetime.init(it, name, user)
     it.format = it.format or '%c'
     it.color = it.color or {1, 1, 1, 1}
-    it.size = it.size or 1
+    it.size = it.size or it.region[4]
     it.size_px = it.size * user.config.grid_size
     it.font_family = it.font_family or "mono"
     it.font = love.graphics.newFont(it.size_px, it.font_family)

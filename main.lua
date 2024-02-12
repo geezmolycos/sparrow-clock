@@ -31,6 +31,24 @@ local items = user.config.items
 local last_mouse_moved = -1000
 local last_mouse_pressed = -1000
 
+function user.grids(n)
+    if type(n) == 'table' then
+        local new_n = {}
+        for i, it in ipairs(n) do
+            table.insert(new_n, it * user.config.grid_size)
+        end
+        return new_n
+    end
+    return n * user.config.grid_size
+end
+
+local function within(pos, region)
+    local x, y = unpack(pos)
+    local x1, y1, w, h = unpack(region)
+    local x2, y2 = x1+w, y1+h
+    return x1 <= x and x < x2 and y1 <= y and y < y2
+end
+
 love.run = function()
     if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
 
@@ -85,32 +103,37 @@ love.run = function()
 end
 
 love.load = function(args)
+    function user.log(...) return end
     if args[1] == 'debug' then
         user.debug = true
+        function user.log(...)
+            local date_str = os.date('%Y-%m-%d %H:%M:%S', os.time())
+            for i, item in ipairs({...}) do
+                if i == 1 then
+                    print('[' .. date_str .. '] ')
+                else
+                    print(string.rep(' ', string.len(date_str) + 3))
+                end
+                print(inspect(item))
+            end
+        end
     end
     -- for debugging
     user.time_offset = 0
     user.time_rate = 1
 
     for name, it in ipairs(items) do
-        it.at = it.at or {0, 0}
-        it.pos = {
-            it.at[1] * user.config.grid_size,
-            it.at[2] * user.config.grid_size
-        }
-        it.dim = {
-            it.span[1] * user.config.grid_size,
-            it.span[2] * user.config.grid_size
-        }
-        it.scale = it.scale or {1, 1}
+        if not it.region then error(tostring(name) .. " with no region") end
+        it.click_region = it.click_region or it.region
+        it.region_px = user.grids(it.region)
+        it.click_region_px = user.grids(it.click_region)
         it.module = require("modules/" .. it.type)
     end
     
     local function hittest(x, y)
         for name, it in ipairs(items) do
-            if  it.pos[1] <= x and x < it.pos[1] + it.dim[1]
-            and it.pos[2] <= y and y < it.pos[2] + it.dim[2] then
-                return it.windows_hit or it.module.windows_hit
+            if within({x, y}, it.click_region_px) then
+                return it.windows_hit or it.module.windows_hit or "client"
             end
         end
         return "client"
@@ -141,7 +164,7 @@ local function debug_draw_grid()
     love.graphics.setLineWidth(2)
     -- draw item boundaries
     for name, it in ipairs(items) do
-        love.graphics.rectangle('line', it.pos[1], it.pos[2], it.dim[1], it.dim[2])
+        love.graphics.rectangle('line', it.region_px[1], it.region_px[2], it.region_px[3], it.region_px[4])
     end
 end
 
@@ -169,9 +192,10 @@ love.draw = function()
     for name = #items, 1, -1 do -- render top last
         it = items[name]
         love.graphics.push()
-        love.graphics.translate(it.pos[1], it.pos[2])
-        love.graphics.scale(it.scale[1], it.scale[2])
+        love.graphics.translate(it.region_px[1], it.region_px[2])
+        if it.before_draw then it.before_draw(it, name, user, state) end
         it.module.draw(it, name, user, state)
+        if it.after_draw then it.after_draw(it, name, user, state) end
         love.graphics.pop()
     end
 
@@ -195,6 +219,16 @@ love.mousemoved = function(x, y, ...)
     if not imgui.love.GetWantCaptureMouse() then
         -- your code here
         last_mouse_moved = love.timer.getTime()
+        for name, it in ipairs(items) do
+            if it.module.mouse and within({x, y}, it.click_region_px) then
+                local state = {
+                    x = (x - it.region_px[1]) / user.config.grid_size,
+                    y = (y - it.region_px[2]) / user.config.grid_size
+                }
+                it.module.mouse(it, name, user, state)
+                break
+            end
+        end
     end
 end
 
@@ -205,14 +239,13 @@ love.mousepressed = function(x, y, button, ...)
         last_mouse_pressed = love.timer.getTime()
         last_mouse_moved = love.timer.getTime()
         for name, it in ipairs(items) do
-            if  it.pos[1] <= x and x < it.pos[1] + it.dim[1]
-            and it.pos[2] <= y and y < it.pos[2] + it.dim[2] then
+            if it.module.click and within({x, y}, it.click_region_px) then
                 local state = {
-                    x = (x - it.pos[1]) / user.config.grid_size,
-                    y = (y - it.pos[2]) / user.config.grid_size,
+                    x = (x - it.region_px[1]) / user.config.grid_size,
+                    y = (y - it.region_px[2]) / user.config.grid_size,
                     button = button
                 }
-                print(name, inspect(state))
+                user.log('clicked' .. tostring(name)  .. inspect{x=x, y=y, button=button})
                 it.module.click(it, name, user, state)
                 break
             end
@@ -224,6 +257,18 @@ love.mousereleased = function(x, y, button, ...)
     imgui.love.MouseReleased(button)
     if not imgui.love.GetWantCaptureMouse() then
         -- your code here 
+        last_mouse_pressed = love.timer.getTime()
+        for name, it in ipairs(items) do
+            if it.module.release and within({x, y}, it.click_region_px) then
+                local state = {
+                    x = (x - it.region_px[1]) / user.config.grid_size,
+                    y = (y - it.region_px[2]) / user.config.grid_size,
+                    button = button
+                }
+                it.module.release(it, name, user, state)
+                break
+            end
+        end
     end
 end
 

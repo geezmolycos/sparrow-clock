@@ -6,7 +6,7 @@ local srgb = require "srgb"
 sun_clock.windows_hit = 'client'
 
 function sun_clock.init(it, name, user)
-    it.size = it.size or {1, 1}
+    it.size = {it.region[3], it.region[4]}
     it.size_px = {it.size[1] * user.config.grid_size, it.size[2] * user.config.grid_size}
     it.hour_offset = it.hour_offset or 0
     it.day_color = it.day_color or {srgb.to_float_range(135, 206, 250)}
