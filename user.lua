@@ -41,9 +41,9 @@ user.config = {
         },
         {
             type = "sun_clock",
-            at = {0, 2},
-            size = 4,
-            span = {24, 4}
+            at = {0, 6},
+            size = {24, 2},
+            span = {24, 2}
         }
     },
     window_display = 2,
