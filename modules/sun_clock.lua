@@ -13,6 +13,7 @@ function sun_clock.init(it, name, user)
     it.night_color = it.night_color or {srgb.to_float_range(25, 25, 112)}
     it.sun_color = it.sun_color
     it.moon_color = it.moon_color
+    it.show_length = it.show_length or 0.5
     it.day_length = it.day_length or 0.3
     it.gradient_length = it.gradient_length or 0.3
     it.gradient_steps = it.gradient_steps or 16
@@ -21,16 +22,16 @@ function sun_clock.init(it, name, user)
         table.insert(range, i / (it.gradient_steps + 1))
     end
     it.gradient = srgb.interpolate(range, it.day_color, it.night_color)
-    it.bar = love.graphics.newCanvas(it.size_px[1], it.size_px[2] * 2)
+    it.bar = love.graphics.newCanvas(it.size_px[1] / it.show_length, it.size_px[2])
 
     love.graphics.setCanvas(it.bar)
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.setBlendMode("alpha")
     love.graphics.origin()
 
-    local day_no_gradient_width = (it.day_length - it.gradient_length) * it.size_px[1] * 2
-    local night_no_gradient_width = (1 - it.day_length - it.gradient_length) * it.size_px[1] * 2
-    local gradient_width = it.gradient_length * it.size_px[1] * 2
+    local day_no_gradient_width = (it.day_length - it.gradient_length) * it.size_px[1] / it.show_length
+    local night_no_gradient_width = (1 - it.day_length - it.gradient_length) * it.size_px[1] / it.show_length
+    local gradient_width = it.gradient_length * it.size_px[1] / it.show_length
     local gradient_step_width = gradient_width / it.gradient_steps
     local cx = 0
     local function colorize(width, color)
@@ -56,9 +57,12 @@ function sun_clock.init(it, name, user)
 end
 
 function sun_clock.draw(it, name, user, state)
+    local day_fraction = date(state.utc_datetime):addhours(it.hour_offset):spandays() % 1
     love.graphics.setBlendMode("alpha", "premultiplied")
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(it.bar, 0,0)
+    love.graphics.draw(it.bar, (day_fraction - 1.75) / it.show_length * it.size_px[1] ,0)
+    love.graphics.draw(it.bar, (day_fraction - 0.75) / it.show_length * it.size_px[1] ,0)
+    love.graphics.draw(it.bar, (day_fraction + 0.25) / it.show_length * it.size_px[1] ,0)
     love.graphics.setBlendMode("alpha")
 end
 
