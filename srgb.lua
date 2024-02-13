@@ -74,11 +74,11 @@ function srgb.interpolate(ratio, c1, c2)
     local r1, g1, b1 = c1[1], c1[2], c1[3]
     local r2, g2, b2 = c2[1], c2[2], c2[3]
     if type(ratio) == 'number' then
-        return r1 * ratio + r2, g1 * ratio + g2, b1 * ratio + b2
+        return r1 * ratio + r2 * (1-ratio), g1 * ratio + g2 * (1-ratio), b1 * ratio + b2 * (1-ratio)
     else
         local result = {}
         for i, it in ipairs(ratio) do
-            local r, g, b = r1 * it + r2, g1 * it + g2, b1 * it + b2
+            local r, g, b = r1 * it + r2 * (1-it), g1 * it + g2 * (1-it), b1 * it + b2 * (1-it)
             table.insert(result, {r, g, b})
         end
         return result
@@ -89,11 +89,11 @@ function srgb.interpolate_in_linear(ratio, c1, c2)
     local r1l, g1l, b1l = srgb.to_linear(c1[1], c1[2], c1[3])
     local r2l, g2l, b2l = srgb.to_linear(c1[1], c1[2], c1[3])
     if type(ratio) == 'number' then
-        return srgb.from_linear(r1l * ratio + r2l, g1l * ratio + g2l, b1l * ratio + b2l)
+        return srgb.from_linear(r1 * ratio + r2 * (1-ratio), g1 * ratio + g2 * (1-ratio), b1 * ratio + b2 * (1-ratio))
     else
         local result = {}
         for i, it in ipairs(ratio) do
-            local r, g, b = srgb.from_linear(r1l * it + r2l, g1l * it + g2l, b1l * it + b2l)
+            local r, g, b = srgb.from_linear(r1 * it + r2 * (1-it), g1 * it + g2 * (1-it), b1 * it + b2 * (1-it))
             table.insert(result, {r, g, b})
         end
         return result
