@@ -14,7 +14,7 @@ function sun_clock.init(it, name, user)
     it.night_color = it.night_color or {srgb.to_float_range(25, 25, 112)}
     it.sun_color = it.sun_color or {srgb.to_float_range(255, 255, 255)}
     it.sun_border_color = it.sun_border_color or {srgb.to_float_range(255, 255, 255)}
-    it.moon_color = it.moon_color or {srgb.to_float_range(255, 255, 255)}
+    it.moon_color = it.moon_color or {srgb.to_float_range(192, 192, 192)}
     it.show_length = it.show_length or 0.5
     it.day_length = it.day_length or 0.5
     it.gradient_length = it.gradient_length or 0.1
@@ -26,7 +26,7 @@ function sun_clock.init(it, name, user)
     it.gradient = srgb.interpolate_in_linear(range, it.day_color, it.night_color)
     it.bar = love.graphics.newCanvas(it.size_px[1] / it.show_length, it.size_px[2])
 
-    love.graphics.setCanvas(it.bar)
+    love.graphics.setCanvas({it.bar, stencil=true})
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.setBlendMode("alpha")
     love.graphics.origin()
@@ -65,15 +65,25 @@ function sun_clock.init(it, name, user)
     love.graphics.setLineWidth(0.05 * it.size_px[2])
     love.graphics.circle('line', sun_center, 0.5 * it.size_px[2], sun_radius)
     -- stars
-    love.graphics.setColor(it.moon_color)
-    local star_radius = 0.2 * 0.5 * it.size_px[2]
-    local function draw_star(x, y, dx)
-        if not dx then dx = 0 end
-        love.graphics.circle('fill', x * it.size_px[1] / it.show_length + dx * it.size_px[2], y * it.size_px[2], star_radius)
-    end
+    -- local star_radius = 0.15 * 0.5 * it.size_px[2]
+    -- local function draw_star(x, y, dx)
+    --     if not dx then dx = 0 end
+    --     love.graphics.circle('fill', x * it.size_px[1] / it.show_length + dx * it.size_px[2], y * it.size_px[2], star_radius)
+    -- end
+    
+    -- draw_star(0, 0.3); draw_star(0, 0.7); draw_star(1, 0.3); draw_star(1, 0.7)
+    -- draw_star(1, 0.5, -0.2); draw_star(0, 0.5, 0.2);
 
-    draw_star(0, 0.3); draw_star(0, 0.7); draw_star(1, 0.3); draw_star(1, 0.7)
-    draw_star(1, 0.5, -0.2); draw_star(0, 0.5, 0.2);
+    -- moon
+    love.graphics.setColor(it.moon_color)
+    for _, x in ipairs{0, 1} do
+        love.graphics.stencil(function()
+            love.graphics.circle('fill', -0.35 * it.size_px[2], 0.5 * it.size_px[2], 0.35 * math.sqrt(2) * it.size_px[2])
+        end, "replace", 1)
+        love.graphics.setStencilTest("equal", 0)
+        love.graphics.circle('fill', 0, 0.5 * it.size_px[2], 0.7 * 0.5 * it.size_px[2])
+        love.graphics.setStencilTest()
+    end
 
     love.graphics.setCanvas()
 end
