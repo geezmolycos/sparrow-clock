@@ -21,17 +21,25 @@ user.config = {
             type = "datetime",
             region = {0, 0, 24, 2},
             right = false,
-            format = "%Y-%m-%d"
+            format = "%Y-%m-%d",
+            before_draw = function (it, name, user, state)
+                love.graphics.setColor(0, 0, 0, 0.3)
+                love.graphics.rectangle('fill', 0, 0, user.grids(24), user.grids(2))
+            end
         },
         {
             type = "datetime",
             region = {0, 2, 24, 4},
             right = false,
-            format = "%H:%M:%S"
+            format = "%H:%M:%S",
+            before_draw = function (it, name, user, state)
+                love.graphics.setColor(0, 0, 0, 0.3)
+                love.graphics.rectangle('fill', 0, 0, user.grids(24), user.grids(4))
+            end
         },
         {
             type = "sun_clock",
-            region = {0, 6, 24, 2}
+            region = {6, 6, 6, 2}
         }
     },
     window_display = 2,
