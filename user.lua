@@ -137,7 +137,7 @@ user.config = {
     window_anchor_y = 'top',
     mouse_moved_active = 1,
     mouse_pressed_active = 1,
-    event_update_rate = 12,
+    event_update_rate = 18,
     graphics_update_rate = 6
 }
 

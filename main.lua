@@ -147,6 +147,12 @@ love.load = function(args)
     for name, it in ipairs(items) do
         it.module.init(it, name, user)
     end
+
+    if user.debug then
+        user.debug_profiler = require("profile")
+        user.debug_profiler.start()
+        user.debug_frame = 0
+    end
 end
 
 local function debug_draw_grid()
@@ -172,7 +178,6 @@ local function debug_draw_grid()
     love.graphics.setLineWidth(2)
     -- draw item boundaries
     for name, it in ipairs(items) do
-        
         love.graphics.rectangle('line', it.region_px[1], it.region_px[2], it.region_px[3], it.region_px[4])
     end
 end
@@ -292,6 +297,11 @@ love.update = function(dt)
             end
             press_time = 0
         end
+    end
+    if user.debug then user.debug_frame = user.debug_frame + 1 end
+    if user.debug and user.debug_frame%100 == 0 then
+        user.log(user.debug_profiler.report(20))
+        user.debug_profiler.reset()
     end
 end
 
