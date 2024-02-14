@@ -16,21 +16,21 @@ local function draw_frame(user, x, y, w, h)
 end
 
 user.config = {
-    grid_size = 16,
-    cols = 26,
+    grid_size = 64,
+    cols = 25,
     rows = 7.5,
     items = {
         {
             type = "close",
-            region = {24, 0, 2, 2}
+            region = {23, 0, 2, 2}
         },
         {
             type = "drag",
-            region = {22, 0, 2, 2}
+            region = {21, 0, 2, 2}
         },
         {
             type = "top",
-            region = {20, 0, 2, 2}
+            region = {19, 0, 2, 2}
         },
         {
             type = "datetime",

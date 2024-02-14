@@ -233,9 +233,72 @@ love.draw = function()
     
 end
 
+local function debug_process_keys(key)
+    local offset = ({
+        e = -60*60*24*((365*4+1)*25-1),
+        r = -60*60*24*365,
+        t = -60*60*24*30,
+        s = -60*60*24,
+        d = -60*60,
+        f = -60,
+        g = -1,
+        h = 1,
+        j = 60,
+        k = 60*60,
+        l = 60*60*24,
+        y = 60*60*24*30,
+        u = 60*60*24*365,
+        i = 60*60*24*((365*4+1)*25-1)
+    })[key]
+    if offset then
+        user.time_offset = user.time_offset + offset
+    end
+    local rate = ({
+        v = 1/4,
+        b = 1/math.sqrt(2),
+        n = math.sqrt(2),
+        m = 4,
+        [','] = 1,
+        ['.'] = 1
+    })[key]
+    if rate then
+        local current_datetime = windows_time.get_datetime()
+        local display_datetime = date{sec = current_datetime:spanseconds() * user.time_rate + user.time_offset}
+        local new_rate = user.time_rate * rate
+        if key == ',' then -- reverse time
+            new_rate = -new_rate
+        end
+        if key == '.' then
+            new_rate = 1 -- normal rate
+        end
+        local new_offset = display_datetime:spanseconds() - current_datetime:spanseconds() * new_rate
+        user.time_offset = new_offset
+        user.time_rate = new_rate
+    end
+    if key == ';' then -- reset
+        user.time_offset = 0
+        user.time_rate = 1
+    end
+end
+
+local last_key = 'a'
+local current_key
+local in_repeat = false
+local press_time = 0
+
 love.update = function(dt)
     imgui.love.Update(dt)
     imgui.NewFrame()
+    if last_key == current_key then
+        press_time = press_time + dt
+        if not in_repeat and press_time > 1 then
+            in_repeat = true
+        end
+        if in_repeat and press_time > 0.2 then
+            debug_process_keys(current_key)
+            press_time = 0
+        end
+    end
 end
 
 love.mousemoved = function(x, y, ...)
@@ -303,67 +366,23 @@ love.wheelmoved = function(x, y)
     end
 end
 
-local function debug_process_keys(key)
-    local offset = ({
-        e = -60*60*24*((365*4+1)*25-1),
-        r = -60*60*24*365,
-        t = -60*60*24*30,
-        s = -60*60*24,
-        d = -60*60,
-        f = -60,
-        g = -1,
-        h = 1,
-        j = 60,
-        k = 60*60,
-        l = 60*60*24,
-        y = 60*60*24*30,
-        u = 60*60*24*365,
-        i = 60*60*24*((365*4+1)*25-1)
-    })[key]
-    if offset then
-        user.time_offset = user.time_offset + offset
-    end
-    local rate = ({
-        v = 1/4,
-        b = 1/math.sqrt(2),
-        n = math.sqrt(2),
-        m = 4,
-        [','] = 1,
-        ['.'] = 1
-    })[key]
-    if rate then
-        local current_datetime = windows_time.get_datetime()
-        local display_datetime = date{sec = current_datetime:spanseconds() * user.time_rate + user.time_offset}
-        local new_rate = user.time_rate * rate
-        if key == ',' then -- reverse time
-            new_rate = -new_rate
-        end
-        if key == '.' then
-            new_rate = 1 -- normal rate
-        end
-        local new_offset = display_datetime:spanseconds() - current_datetime:spanseconds() * new_rate
-        user.time_offset = new_offset
-        user.time_rate = new_rate
-    end
-    if key == ';' then -- reset
-        user.time_offset = 0
-        user.time_rate = 1
-    end
-end
-
 love.keypressed = function(key, ...)
     imgui.love.KeyPressed(key)
     if not imgui.love.GetWantCaptureKeyboard() then
         if user.debug then
             debug_process_keys(key)
         end
+        current_key = key
+        last_key = key
     end
 end
 
 love.keyreleased = function(key, ...)
     imgui.love.KeyReleased(key)
     if not imgui.love.GetWantCaptureKeyboard() then
-        -- your code here 
+        -- your code here
+        current_key = nil
+        in_repeat = false
     end
 end
 
