@@ -54,6 +54,7 @@ user.config = {
             type = "sun_clock",
             region = {12.5, 0.75, 4, 1.25},
             show_length = 0.4,
+            hour_offset = 8,
             before_draw = function (it, name, user, state)
                 draw_frame(user, 11.75, 0, 5.75, 2.75)
             end,

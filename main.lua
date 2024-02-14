@@ -204,7 +204,7 @@ love.draw = function()
     
     local state = {
         utc_datetime = utc_datetime,
-        local_datetime = utc_datetime:tolocal(),
+        local_datetime = date(utc_datetime):tolocal(),
         last_mouse_moved = last_mouse_moved,
         last_mouse_pressed = last_mouse_pressed,
         timer = timer,
