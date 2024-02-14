@@ -16,7 +16,7 @@ local function draw_frame(user, x, y, w, h)
 end
 
 user.config = {
-    grid_size = 64,
+    grid_size = 16,
     cols = 25,
     rows = 7.5,
     items = {
@@ -137,7 +137,7 @@ user.config = {
     window_anchor_y = 'top',
     mouse_moved_active = 1,
     mouse_pressed_active = 1,
-    event_update_rate = 30,
+    event_update_rate = 12,
     graphics_update_rate = 6
 }
 

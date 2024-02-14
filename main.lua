@@ -101,6 +101,7 @@ love.load = function(args)
     function user.log(...) return end
     if args[1] == 'debug' then
         user.debug = true
+        user.debug_display = true
         function user.log(...)
             local date_str = os.date('%Y-%m-%d %H:%M:%S', os.time())
             for i, item in ipairs({...}) do
@@ -216,7 +217,7 @@ love.draw = function()
         love.graphics.pop()
     end
 
-    if user.debug then
+    if user.debug_display then
         debug_draw_grid()
         debug_draw_mouse()
     end
@@ -269,6 +270,9 @@ local function debug_process_keys(key)
         user.time_offset = 0
         user.time_rate = 1
     end
+    if key == '/' then -- disable debug display
+        user.debug_display = not user.debug_display
+    end
 end
 
 local last_key = 'a'
@@ -283,7 +287,9 @@ love.update = function(dt)
             in_repeat = true
         end
         if in_repeat and press_time > 0.2 then
-            debug_process_keys(current_key)
+            if debug then
+                debug_process_keys(current_key)
+            end
             press_time = 0
         end
     end
