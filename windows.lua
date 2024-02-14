@@ -141,6 +141,8 @@ HRESULT DwmEnableBlurBehindWindow(
   const DWM_BLURBEHIND *pBlurBehind
 );
 
+BOOL SetProcessDPIAware();
+
 ]]
 
 -- use DwmEnableBlurBehindWindow which works on modern windows
@@ -255,6 +257,9 @@ function windows.get_hwnd()
 end
 
 function windows.init(user, hittest)
+    if not ffi.C.SetProcessDPIAware() then
+        print("set dpi awareness failed")
+    end
     windows.hittest = hittest
     windows.window_snap_x = user.config.window_snap_x
     windows.window_snap_y = user.config.window_snap_y

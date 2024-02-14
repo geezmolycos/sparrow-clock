@@ -22,13 +22,15 @@
 
 配置文件为 `user_external.lua` ，请参考源码中的 `user.lua`，因为主要是自己用，目前没有文档。
 
+窗口位置不会保存，可以在配置文件里面修改
+
 命令行参数 `debug` 可以启用调试模式，按下一些字母键可以调整时间、改变时间流速。按 `/` 可以切换调试网格和边框显示不显示。
 
 如果要自己编写模块，可以参考现有的模块，编写 `<模块名>.lua` 放到程序目录下的 `modules` 目录中，然后在配置文件中使用。
 
 ## 构建
 
-构建脚本为 `build.sh`，使用 bash 运行
+构建脚本为 `build.sh`，使用 bash 运行，参数是 love.exe 所在的目录
 在 Windows 下，推荐使用 [MSYS2](https://www.msys2.org/) bash 环境，或者 Git Bash，或者 WSL，反正构建脚本也很简单。
 
 ## English Introduction
