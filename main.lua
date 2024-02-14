@@ -2,19 +2,11 @@
 if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
--- Make sure the shared library can be found through package.cpath before loading the module.
--- For example, if you put it in the LÖVE save directory, you could do something like this:
-local lua_path = love.filesystem.getSource() .. "/lua"
-local lib_path = love.filesystem.getSource() .. "/lib"
-local extension = jit.os == "Windows" and "dll" or jit.os == "Linux" and "so" or jit.os == "OSX" and "dylib"
 
-package.path = string.format("%s;%s/?/init.lua", package.path, lua_path)
-package.path = string.format("%s;%s/?.%s", package.path, lua_path, "lua")
-package.cpath = string.format("%s;%s/?.%s", package.cpath, lib_path, extension)
+love.filesystem.setRequirePath(love.filesystem.getRequirePath() .. ';lua/?.lua;lua/?/init.lua')
 
 local ffi = require "ffi"
 local inspect = require "inspect"
-local imgui = require "cimgui"
 local date = require "date"
 
 if ffi.os ~= "Windows" then
@@ -147,7 +139,6 @@ love.load = function(args)
     end
     
     windows.init(user, hittest)
-    imgui.love.Init() -- or imgui.love.Init("RGBA32") or imgui.love.Init("Alpha8")
     
     local font = love.graphics.newFont(user.config.grid_size, "mono")
     love.graphics.setFont(font)
@@ -229,10 +220,6 @@ love.draw = function()
         debug_draw_grid()
         debug_draw_mouse()
     end
-    -- code to render imgui
-    love.graphics.setColor(1, 1, 1)
-    imgui.Render()
-    imgui.love.RenderDrawLists()
     
 end
 
@@ -290,8 +277,6 @@ local in_repeat = false
 local press_time = 0
 
 love.update = function(dt)
-    imgui.love.Update(dt)
-    imgui.NewFrame()
     if last_key == current_key then
         press_time = press_time + dt
         if not in_repeat and press_time > 1 then
@@ -305,127 +290,69 @@ love.update = function(dt)
 end
 
 love.mousemoved = function(x, y, ...)
-    imgui.love.MouseMoved(x, y)
-    if not imgui.love.GetWantCaptureMouse() then
-        -- your code here
-        last_mouse_moved = love.timer.getTime()
-        for name, it in ipairs(items) do
-            if it.module.mouse and within({x, y}, it.click_region_px) then
-                local state = {
-                    x = (x - it.region_px[1]) / user.config.grid_size,
-                    y = (y - it.region_px[2]) / user.config.grid_size
-                }
-                it.module.mouse(it, name, user, state)
-                break
-            end
+    last_mouse_moved = love.timer.getTime()
+    for name, it in ipairs(items) do
+        if it.module.mouse and within({x, y}, it.click_region_px) then
+            local state = {
+                x = (x - it.region_px[1]) / user.config.grid_size,
+                y = (y - it.region_px[2]) / user.config.grid_size
+            }
+            it.module.mouse(it, name, user, state)
+            break
         end
     end
 end
 
 love.mousepressed = function(x, y, button, ...)
-    imgui.love.MousePressed(button)
-    if not imgui.love.GetWantCaptureMouse() then
-        -- your code here
-        last_mouse_pressed = love.timer.getTime()
-        last_mouse_moved = love.timer.getTime()
-        for name, it in ipairs(items) do
-            if it.module.click and within({x, y}, it.click_region_px) then
-                local state = {
-                    x = (x - it.region_px[1]) / user.config.grid_size,
-                    y = (y - it.region_px[2]) / user.config.grid_size,
-                    button = button
-                }
-                user.log('clicked' .. tostring(name)  .. inspect{x=x, y=y, button=button})
-                it.module.click(it, name, user, state)
-                break
-            end
+    last_mouse_pressed = love.timer.getTime()
+    last_mouse_moved = love.timer.getTime()
+    for name, it in ipairs(items) do
+        if it.module.click and within({x, y}, it.click_region_px) then
+            local state = {
+                x = (x - it.region_px[1]) / user.config.grid_size,
+                y = (y - it.region_px[2]) / user.config.grid_size,
+                button = button
+            }
+            user.log('clicked' .. tostring(name)  .. inspect{x=x, y=y, button=button})
+            it.module.click(it, name, user, state)
+            break
         end
     end
 end
 
 love.mousereleased = function(x, y, button, ...)
-    imgui.love.MouseReleased(button)
-    if not imgui.love.GetWantCaptureMouse() then
-        -- your code here 
-        last_mouse_pressed = love.timer.getTime()
-        for name, it in ipairs(items) do
-            if it.module.release and within({x, y}, it.click_region_px) then
-                local state = {
-                    x = (x - it.region_px[1]) / user.config.grid_size,
-                    y = (y - it.region_px[2]) / user.config.grid_size,
-                    button = button
-                }
-                it.module.release(it, name, user, state)
-                break
-            end
+    last_mouse_pressed = love.timer.getTime()
+    for name, it in ipairs(items) do
+        if it.module.release and within({x, y}, it.click_region_px) then
+            local state = {
+                x = (x - it.region_px[1]) / user.config.grid_size,
+                y = (y - it.region_px[2]) / user.config.grid_size,
+                button = button
+            }
+            it.module.release(it, name, user, state)
+            break
         end
     end
 end
 
 love.wheelmoved = function(x, y)
-    imgui.love.WheelMoved(x, y)
-    if not imgui.love.GetWantCaptureMouse() then
-        -- your code here 
-    end
 end
 
 love.keypressed = function(key, ...)
-    imgui.love.KeyPressed(key)
-    if not imgui.love.GetWantCaptureKeyboard() then
-        if user.debug then
-            debug_process_keys(key)
-        end
-        current_key = key
-        last_key = key
+    if user.debug then
+        debug_process_keys(key)
     end
+    current_key = key
+    last_key = key
 end
 
 love.keyreleased = function(key, ...)
-    imgui.love.KeyReleased(key)
-    if not imgui.love.GetWantCaptureKeyboard() then
-        -- your code here
-        current_key = nil
-        in_repeat = false
-    end
+    current_key = nil
+    in_repeat = false
 end
 
 love.textinput = function(t)
-    imgui.love.TextInput(t)
-    if imgui.love.GetWantCaptureKeyboard() then
-        -- your code here 
-    end
 end
 
 love.quit = function()
-    return imgui.love.Shutdown()
-end
-
--- for gamepad support also add the following:
-
-love.joystickadded = function(joystick)
-    imgui.love.JoystickAdded(joystick)
-    -- your code here 
-end
-
-love.joystickremoved = function(joystick)
-    imgui.love.JoystickRemoved()
-    -- your code here 
-end
-
-love.gamepadpressed = function(joystick, button)
-    imgui.love.GamepadPressed(button)
-    -- your code here 
-end
-
-love.gamepadreleased = function(joystick, button)
-    imgui.love.GamepadReleased(button)
-    -- your code here 
-end
-
--- choose threshold for considering analog controllers active, defaults to 0 if unspecified
-local threshold = 0.2 
-
-love.gamepadaxis = function(joystick, axis, value)
-    imgui.love.GamepadAxis(axis, value, threshold)
-    -- your code here 
 end
