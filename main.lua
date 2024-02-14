@@ -24,8 +24,8 @@ end
 
 local windows = require "windows"
 local windows_time = require "windows_time"
-local err, user = pcall(require, "user_external")
-if err then
+local succeed, user = pcall(require, "user_external")
+if not succeed then
     user = require "user"
 end
 
