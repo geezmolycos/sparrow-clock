@@ -24,7 +24,10 @@ end
 
 local windows = require "windows"
 local windows_time = require "windows_time"
-local user = require "user"
+local err, user = pcall(require, "user_external")
+if err then
+    user = require "user"
+end
 
 local items = user.config.items
 
