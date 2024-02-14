@@ -108,7 +108,7 @@ function clock.draw(it, name, user, state)
 
     -- draw hands
     love.graphics.translate(r, r)
-    local day_fraction = date(state.utc_datetime):spandays() % 1
+    local day_fraction = date(state.local_datetime):spandays() % 1
     for i, hand in ipairs(it.hands) do
         love.graphics.push()
         love.graphics.rotate(day_fraction * hand.rate * 2*math.pi)

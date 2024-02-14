@@ -105,13 +105,13 @@ user.config = {
             hands = {
                 {
                     width = 0.15,
-                    length = 0.5,
+                    length = 0.4,
                     color = {1, 1, 1, 1},
                     rate = 2
                 },
                 {
                     width = 0.1,
-                    length = 0.7,
+                    length = 0.6,
                     color = {1, 1, 1, 1},
                     rate = 24
                 },
