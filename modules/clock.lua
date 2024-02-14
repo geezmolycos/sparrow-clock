@@ -79,6 +79,7 @@ function clock.init(it, name, user)
         end
     end
     -- draw labels
+    love.graphics.setFont(it.font)
     cr = cr - user.grids(it.label_spacing)
     it.labels = it.labels or {'12', '3', '6', '9'}
     for i, text in ipairs(it.labels) do
@@ -87,7 +88,7 @@ function clock.init(it, name, user)
         love.graphics.rotate(-(i-1)/#it.labels * 2*math.pi)
         love.graphics.setColor(it.font_color)
         local width = it.font:getWidth(text)
-        love.graphics.print(text, -width, -it.font_size_px)
+        love.graphics.print(text, -width/2, -it.font:getHeight()/2)
         love.graphics.pop()
         love.graphics.rotate(1/#it.labels * 2*math.pi)
     end

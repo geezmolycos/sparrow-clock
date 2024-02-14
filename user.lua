@@ -99,6 +99,7 @@ user.config = {
             large_tick_length = 0.6,
             small_tick_color = {0, 0, 0, 0},
             label_spacing = 1.2,
+            font_size = 1,
             font_color = {1, 1, 1, 1},
             pin_color = {1, 1, 1, 1},
             pin_radius = 0.2,
