@@ -3,7 +3,7 @@ local user = {}
 user.config = {
     grid_size = 16,
     cols = 24,
-    rows = 8,
+    rows = 16,
     items = {
         {
             type = "top",
@@ -40,6 +40,10 @@ user.config = {
         {
             type = "sun_clock",
             region = {6, 6, 6, 2}
+        },
+        {
+            type = "clock",
+            region = {12, 6, 8, 8}
         }
     },
     window_display = 2,

@@ -262,7 +262,7 @@ function windows.init(user, hittest)
     windows.window_snap_offset_y = user.window_snap_offset_y
     love.window.setMode(
         user.window_width, user.window_height,
-        { borderless = true, resizable = false, vsync = 0,
+        { borderless = true, resizable = false, vsync = 0, msaa = 4,
           display = user.config.window_display, x = user.window_x, y = user.window_y,
           highdpi = true, usedpiscale = false }
     )

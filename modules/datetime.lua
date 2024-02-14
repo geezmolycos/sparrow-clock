@@ -7,8 +7,8 @@ function datetime.init(it, name, user)
     it.color = it.color or {1, 1, 1, 1}
     it.size = it.size or it.region[4]
     it.size_px = it.size * user.config.grid_size
-    it.font_family = it.font_family or "mono"
-    it.font = love.graphics.newFont(it.size_px, it.font_family)
+    it.font_family = it.font_family or 'fonts/Lato-Bold.ttf'
+    it.font = love.graphics.newFont(it.font_family, it.size_px)
     it.right = it.right or false
     it.is_utc = it.is_utc or false
 end

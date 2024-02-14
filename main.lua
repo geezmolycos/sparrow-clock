@@ -114,7 +114,11 @@ love.load = function(args)
                 else
                     print(string.rep(' ', string.len(date_str) + 3))
                 end
-                print(inspect(item))
+                if type(item) == 'string' then
+                    print(item)
+                else
+                    print(inspect(item))
+                end
             end
         end
     end

@@ -1,6 +1,10 @@
 
 function love.conf(t)
-    t.console = true
+    if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
+        t.console = false
+    else
+        t.console = true
+    end
     t.modules.audio = false
     t.modules.data = false
     t.modules.joystick = false
