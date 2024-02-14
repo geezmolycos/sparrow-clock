@@ -9,7 +9,7 @@ function clock.init(it, name, user)
     it.size = math.min(it.region[3], it.region[4])
     it.size_px = user.grids(it.size)
     it.base_color = it.base_color or {0, 0, 0, 0.1}
-    it.border_color = it.base_color or {0.3, 0.3, 0.3, 1}
+    it.border_color = it.border_color or {0.3, 0.3, 0.3, 1}
     it.border_width = it.border_width or 0.3
     it.tick_spacing = it.tick_spacing or 0.3
     it.large_tick_color = it.large_tick_color or {0, 0, 0, 1}
@@ -46,10 +46,7 @@ function clock.init(it, name, user)
             rate = 24 * 60
         }
     }
-    it.hour_hand_width = it.hour_hand_width or 0.5
-    it.hour_hand_length = it.hour_hand_length or 1
-    it.hour_hand_color = it.hour_hand_color or {0, 0, 0, 1}
-    it.background = love.graphics.newCanvas(it.size_px, it.size_px, {format = 'rgba8', msaa = 4})
+    it.background = love.graphics.newCanvas(it.size_px, it.size_px, {msaa = 4})
     -- make background
     love.graphics.setCanvas(it.background)
     love.graphics.clear(0, 0, 0, 0)
@@ -57,11 +54,12 @@ function clock.init(it, name, user)
     love.graphics.origin()
     -- draw base
     local cr = it.size_px / 2
-    love.graphics.setColor(it.base_color)
     love.graphics.translate(it.size_px / 2, it.size_px / 2)
+    love.graphics.setColor(it.border_color)
     love.graphics.circle('fill', 0, 0, cr)
     love.graphics.setBlendMode("replace")
     cr = cr - user.grids(it.border_width)
+    love.graphics.setColor(it.base_color)
     love.graphics.circle('fill', 0, 0, cr)
     love.graphics.setBlendMode("alpha")
     cr = cr - user.grids(it.tick_spacing)
@@ -96,7 +94,7 @@ function clock.init(it, name, user)
 
     -- center pin
     love.graphics.setColor(it.pin_color)
-    love.graphics.circle('fill', 0, 0, it.pin_radius)
+    love.graphics.circle('fill', 0, 0, user.grids(it.pin_radius))
 
     love.graphics.setCanvas()
 end
@@ -114,7 +112,7 @@ function clock.draw(it, name, user, state)
     for i, hand in ipairs(it.hands) do
         love.graphics.push()
         love.graphics.rotate(day_fraction * hand.rate * 2*math.pi)
-        love.graphics.setLineWidth(hand.width)
+        love.graphics.setLineWidth(user.grids(hand.width))
         love.graphics.setColor(hand.color)
         love.graphics.line(0, 0, 0, -hand.length*r)
         love.graphics.pop()

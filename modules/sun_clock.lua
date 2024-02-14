@@ -24,7 +24,7 @@ function sun_clock.init(it, name, user)
         table.insert(range, i / (it.gradient_steps + 1))
     end
     it.gradient = srgb.interpolate_in_linear(range, it.day_color, it.night_color)
-    it.bar = love.graphics.newCanvas(it.size_px[1] / it.show_length, it.size_px[2])
+    it.bar = love.graphics.newCanvas(it.size_px[1] / it.show_length, it.size_px[2], {msaa = 4})
 
     love.graphics.setCanvas({it.bar, stencil=true})
     love.graphics.clear(0, 0, 0, 0)

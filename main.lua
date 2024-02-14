@@ -156,20 +156,39 @@ end
 
 local function debug_draw_grid()
     love.graphics.origin()
-    love.graphics.setColor(1, 1, 1, 0.5)
     love.graphics.setLineWidth(1)
     for x = 0, user.config.cols-1 do
+        if x % 5 == 0 then
+            love.graphics.setColor(1, 0, 0, 0.5)
+        else
+            love.graphics.setColor(1, 1, 1, 0.5)
+        end
         love.graphics.line(x * user.config.grid_size, 0, x * user.config.grid_size, user.window_height)
     end
     for y = 0, user.config.rows-1 do
+        if y % 5 == 0 then
+            love.graphics.setColor(1, 0, 0, 0.5)
+        else
+            love.graphics.setColor(1, 1, 1, 0.5)
+        end
         love.graphics.line(0, y * user.config.grid_size, user.window_width, y * user.config.grid_size)
     end
     love.graphics.setColor(1, 1, 0, 1)
     love.graphics.setLineWidth(2)
     -- draw item boundaries
     for name, it in ipairs(items) do
+        
         love.graphics.rectangle('line', it.region_px[1], it.region_px[2], it.region_px[3], it.region_px[4])
     end
+end
+
+local function debug_draw_mouse()
+    local x, y = love.mouse.getPosition()
+    local gx = x / user.config.grid_size
+    local gy = y / user.config.grid_size
+    love.graphics.origin()
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print(tostring(math.floor(gx)) .. ', ' .. tostring(math.floor(gy)), x, y)
 end
 
 love.draw = function()
@@ -205,6 +224,7 @@ love.draw = function()
 
     if user.debug then
         debug_draw_grid()
+        debug_draw_mouse()
     end
     -- code to render imgui
     love.graphics.setColor(1, 1, 1)
