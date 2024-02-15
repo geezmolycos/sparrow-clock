@@ -1,9 +1,11 @@
 
-# 麻雀时钟 / Sparrow Clock
+# 🐥麻雀时钟 / Sparrow Clock🕙
 
 [English Introduction](#english-introduction)
 
 ![](images/screenshot.png)
+
+<img src="images/sparrow.png" align="right" width="64" height="64">
 
 可以在悬浮窗中显示的模块化时钟，可以一键置顶或置底，自由调整位置，自由安排显示内容，基于 [LÖVE 引擎](https://love2d.org/)制作。
 
@@ -33,17 +35,34 @@
 构建脚本为 `build.sh`，使用 bash 运行
 在 Windows 下，推荐使用 [MSYS2](https://www.msys2.org/) bash 环境，或者 Git Bash，或者 WSL，反正构建脚本也很简单。
 
+构建会在 `build` 目录下生成 Windows 系统的可执行文件和依赖。
+
 构建需要设置环境变量：
 
 - `LOVE_DIR`: LÖVE 主程序所在的目录
 - `IMAGEMAGICK`: ImageMagick 主程序(magisk)路径，生成 ico 图标
 - `RESOURCEHACKER`: resource hacker 主程序路径，给程序替换图标
 
-## TODO
+## 许可协议
 
-- 错误报告
-- 日志
-- 给其他系统的兼容，至少能运行
+本项目按照 MIT 协议发布，具体请看 LICENSE.txt
+
+本项目包括的依赖相关信息：
+
+- LuaDate v2.2
+  - 项目主页：<https://github.com/Tieske/date>
+  - 作者：\
+    Copyright © 2005-2006 Jas Latrix <jastejada@yahoo.com>\
+    Copyright © 2013-2021 Thijs Schreijer
+  - 协议：[MIT 协议](https://opensource.org/license/mit/)
+- inspect.lua
+  - 项目主页：<https://github.com/kikito/inspect.lua>
+  - 作者：[Enrique García Cota (kikito)](https://github.com/kikito)
+  - 协议：MIT 协议
+- profile.lua
+  - 项目主页：<https://github.com/2dengine/profile.lua>
+  - 作者：[2dengine LLC](https://github.com/2dengine)
+  - 协议：MIT 协议
 
 ## English Introduction
 
