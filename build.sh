@@ -7,6 +7,8 @@ zip -9 -r build/SparrowClock.love . -x ".git**" -x ".vscode**" -x "build**" -x "
 echo "Copying config files"
 
 cp user.lua build/user_external.lua
+cp README.md build/README.md
+cp LICENSE.txt build/LICENSE-SparrowClock.txt
 
 mkdir build/modules
 
@@ -60,3 +62,9 @@ if "${RESOURCEHACKER}" \
 else
    echo "Failed to replace icon"
 fi
+
+echo "Packaging for version ${VERSION}"
+
+pushd build
+zip -9 -r "SparrowClock-${VERSION}-win64.zip" .
+popd
