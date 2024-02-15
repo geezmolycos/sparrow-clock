@@ -30,8 +30,20 @@
 
 ## 构建
 
-构建脚本为 `build.sh`，使用 bash 运行，参数是 love.exe 所在的目录
+构建脚本为 `build.sh`，使用 bash 运行
 在 Windows 下，推荐使用 [MSYS2](https://www.msys2.org/) bash 环境，或者 Git Bash，或者 WSL，反正构建脚本也很简单。
+
+构建需要设置环境变量：
+
+- `LOVE_DIR`: LÖVE 主程序所在的目录
+- `IMAGEMAGICK`: ImageMagick 主程序(magisk)路径，生成 ico 图标
+- `RESOURCEHACKER`: resource hacker 主程序路径，给程序替换图标
+
+## TODO
+
+- 错误报告
+- 日志
+- 给其他系统的兼容，至少能运行
 
 ## English Introduction
 

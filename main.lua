@@ -5,37 +5,22 @@ end
 
 love.filesystem.setRequirePath(love.filesystem.getRequirePath() .. ';lua/?.lua;lua/?/init.lua')
 
-local ffi = require "ffi"
 local inspect = require "inspect"
 local date = require "date"
 
-if ffi.os ~= "Windows" then
-    print("OS is not Windows, not implemented")
-    love.window.showMessageBox( "Warning", "OS is not Windows, not implemented", "warning", false )
-end
-
-local windows = require "windows"
-local windows_time = require "windows_time"
+local port = require "port"
 local succeed, user = pcall(require, "user_external")
 if not succeed then
     user = require "user"
+    user.log("external config file not found, using internal config file")
+else
+    user.log("loaded external config file")
 end
 
 local items = user.config.items
 
 local last_mouse_moved = -1000
 local last_mouse_pressed = -1000
-
-function user.grids(n)
-    if type(n) == 'table' then
-        local new_n = {}
-        for i, it in ipairs(n) do
-            table.insert(new_n, it * user.config.grid_size)
-        end
-        return new_n
-    end
-    return n * user.config.grid_size
-end
 
 local function within(pos, region)
     local x, y = unpack(pos)
@@ -97,30 +82,7 @@ love.run = function()
     end
 end
 
-love.load = function(args)
-    function user.log(...) return end
-    if args[1] == 'debug' then
-        user.debug = true
-        user.debug_display = true
-        function user.log(...)
-            local date_str = os.date('%Y-%m-%d %H:%M:%S', os.time())
-            for i, item in ipairs({...}) do
-                if i == 1 then
-                    print('[' .. date_str .. '] ')
-                else
-                    print(string.rep(' ', string.len(date_str) + 3))
-                end
-                if type(item) == 'string' then
-                    print(item)
-                else
-                    print(inspect(item))
-                end
-            end
-        end
-    end
-    -- for debugging
-    user.time_offset = 0
-    user.time_rate = 1
+love.load = function(arg)
 
     for name, it in ipairs(items) do
         if not it.region then error(tostring(name) .. " with no region") end
@@ -139,7 +101,7 @@ love.load = function(args)
         return "client"
     end
     
-    windows.init(user, hittest)
+    port.init(user, hittest)
     
     local font = love.graphics.newFont(user.config.grid_size, "mono")
     love.graphics.setFont(font)
@@ -197,9 +159,9 @@ love.draw = function()
     -- time offset is for debugging
     local utc_datetime
     if user.debug then
-        utc_datetime = date{sec = windows_time.get_datetime():spanseconds() * user.time_rate + user.time_offset}
+        utc_datetime = date{sec = port.get_datetime():spanseconds() * user.time_rate + user.time_offset}
     else
-        utc_datetime = windows_time.get_datetime()
+        utc_datetime = port.get_datetime()
     end
     
     local state = {
@@ -258,7 +220,7 @@ local function debug_process_keys(key)
         ['.'] = 1
     })[key]
     if rate then
-        local current_datetime = windows_time.get_datetime()
+        local current_datetime = port.get_datetime()
         local display_datetime = date{sec = current_datetime:spanseconds() * user.time_rate + user.time_offset}
         local new_rate = user.time_rate * rate
         if key == ',' then -- reverse time

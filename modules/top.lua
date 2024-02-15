@@ -1,6 +1,6 @@
 local top = {}
 
-local windows = require "windows"
+local port = require "port"
 
 top.windows_hit = 'client'
 
@@ -16,7 +16,7 @@ function top.draw(it, name, user, state)
         love.graphics.rectangle('fill', 0, 0, it.size_px, it.size_px)
         love.graphics.setColor(.3, .3, .3)
         love.graphics.rectangle('line', 0.3 * it.size_px, 0.3 * it.size_px, 0.4 * it.size_px, 0.4 * it.size_px)
-        if windows.at_bottom then
+        if port.at_bottom then
             love.graphics.rectangle('fill', 0.3 * it.size_px, 0.3 * it.size_px, 0.4 * it.size_px, 0.2 * it.size_px)
         else
             love.graphics.rectangle('fill', 0.3 * it.size_px, 0.5 * it.size_px, 0.4 * it.size_px, 0.2 * it.size_px)
@@ -25,11 +25,11 @@ function top.draw(it, name, user, state)
 end
 
 function top.click(it, name, user, state)
-    if windows.at_bottom then
+    if port.at_bottom then
         -- make top
-        windows.set_top(windows.get_hwnd())
+        port.set_top(port.get_hwnd())
     else
-        windows.set_bottom(windows.get_hwnd())
+        port.set_bottom(port.get_hwnd())
     end
 end
 

@@ -4,7 +4,7 @@ function love.conf(t)
     if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
         t.console = false
     end
-    if arg[1] == 'debug' then
+    if arg[2] == 'debug' or arg[2] == 'console' then
         t.console = true
     end
     t.modules.audio = false

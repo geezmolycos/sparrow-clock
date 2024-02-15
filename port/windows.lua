@@ -147,19 +147,18 @@ BOOL SetProcessDPIAware();
 
 -- use DwmEnableBlurBehindWindow which works on modern windows
 function windows.set_transparent(hwnd)
-    --local result = ffi.C.SetWindowPos(hwnd, ffi.cast('void*', -1), 0, 0, 0, 0, 3)
-    --print("r", result)
     local orig_style = ffi.C.GetWindowLongA(hwnd, -16)
     local orig_exstyle = ffi.C.GetWindowLongA(hwnd, -20)
     orig_style = bit.band(orig_style, bit.bnot(0x00cf0000)) -- WS_OVERLAPPEDWINDOW
     orig_style = bit.bor(orig_style, 0x80000000)
     ffi.C.SetWindowLongA(hwnd, -16, orig_style)
     local bb = ffi.new('DWM_BLURBEHIND[1]')
-    local hRgn = ffi.C.CreateRectRgn(0, 0, -1, -1)
+    local hRgn = ffi.C.CreateRectRgn(0, 0, -1, -1) -- create an invisible region
     bb[0].dwFlags = 3 -- DWM_BB_ENABLE | DWM_BB_BLURREGION
     bb[0].hRgnBlur = hRgn
     bb[0].fEnable = true
-    return dwmapi.DwmEnableBlurBehindWindow(hwnd, bb);
+    local result = dwmapi.DwmEnableBlurBehindWindow(hwnd, bb);
+    if result == 0 then return true else return false, result end
 end
 
 function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData)
@@ -173,9 +172,9 @@ function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, d
         end
         -- snap
         local x = windowpos.x
-        x = x - (x - windows.window_snap_offset_x) % windows.window_snap_x
+        x = x - (x - windows.snap_offset_x) % windows.snap_x
         local y = windowpos.y
-        y = y - (y - windows.window_snap_offset_y) % windows.window_snap_y
+        y = y - (y - windows.snap_offset_y) % windows.snap_y
         windowpos.x = x
         windowpos.y = y
         local cx = windowpos.cx
@@ -221,34 +220,38 @@ function windows.register_subclass_window_proc(hwnd)
     windows.set_bottom(hwnd)
     -- https://stackoverflow.com/questions/63143237/change-wndproc-of-the-window
     local result = comctl32.SetWindowSubclass(hwnd, windows.subclass_window_proc_cb, 1, 0)
-    if result == 0 then
-        return result
-    end
+    if result == 1 then return true else return false end
 end
 
 function windows.set_bottom(hwnd)
     -- set to HWND_BOTTOM
     local result = ffi.C.SetWindowPos(hwnd, ffi.cast("HWND", 1), 0, 0, 0, 0, 0x0013) -- SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
-    if result == 0 then
-        return ffi.C.GetLastError()
+    if result ~= 0 then
+        windows.at_bottom = true
+        return true
+    else
+        return false, ffi.C.GetLastError()
     end
-    windows.at_bottom = true
 end
 
 function windows.set_top(hwnd)
     windows.at_bottom = false
     -- set to HWND_TOPMOST
     local result = ffi.C.SetWindowPos(hwnd, ffi.cast("HWND", -1), 0, 0, 0, 0, 0x0013) -- SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
-    if result == 0 then
-        return ffi.C.GetLastError()
+    if result ~= 0 then
+        return true
+    else
+        return false, ffi.C.GetLastError()
     end
 end
 
 function windows.hide_taskbar(hwnd)
     local orig_ex = ffi.C.GetWindowLongA(hwnd, -20)
     local result = ffi.C.SetWindowLongA(hwnd, -20, bit.bor(orig_ex, 0x00000080)) -- WS_EX_TOOLWINDOW
-    if result == 0 then
-        return ffi.C.GetLastError()
+    if result ~= 0 then
+        return true
+    else
+        return false, ffi.C.GetLastError()
     end
 end
 
@@ -258,33 +261,93 @@ end
 
 function windows.init(user, hittest)
     if not ffi.C.SetProcessDPIAware() then
-        print("set dpi awareness failed")
+        user.log("set dpi awareness failed")
     end
     windows.hittest = hittest
-    windows.window_snap_x = user.config.window_snap_x
-    windows.window_snap_y = user.config.window_snap_y
-    windows.window_snap_offset_x = user.window_snap_offset_x
-    windows.window_snap_offset_y = user.window_snap_offset_y
+    windows.snap_x = user.config.windows_snap_x
+    windows.snap_y = user.config.windows_snap_y
+    windows.snap_offset_x = user.windows_snap_offset_x
+    windows.snap_offset_y = user.windows_snap_offset_y
     love.window.setMode(
         user.window_width, user.window_height,
-        { borderless = true, resizable = false, vsync = 0, msaa = 4,
+        { borderless = user.config.window_borderless, resizable = false, vsync = 0, msaa = 4,
           display = user.config.window_display, x = user.window_x, y = user.window_y,
           highdpi = true, usedpiscale = false }
     )
     local hwnd = windows.get_hwnd()
-    print(hwnd)
-    if windows.set_transparent(hwnd) ~= 0 then
-        print("error setting transparent", ffi.C.GetLastError())
+    user.log("hWnd:", hwnd)
+    if user.config.windows_transparent then
+        local status, err = windows.set_transparent(hwnd)
+        if not status then
+            user.log("error setting transparent", err)
+        end
     end
-    if windows.register_subclass_window_proc(hwnd) then
-        print("error registering subcalss proc")
+    local status, err = windows.register_subclass_window_proc(hwnd)
+    if not status then
+        user.log("error registering subclass proc", err)
     end
-    windows.set_top(hwnd)
-    if windows.hide_taskbar(hwnd) then
-        print("error hiding taskbar")
+    if user.config.windows_bottom then
+        windows.set_bottom(hwnd)
+    else
+        windows.set_top(hwnd)
+    end
+    if windows_hide_taskbar then
+        local status, err = windows.hide_taskbar(hwnd)
+        if not status then
+            print("error hiding taskbar")
+        end
     end
     love.graphics.setBackgroundColor(0, 0, 0, 0)
 end
 
+-- datetime part
+
+local date = require "date"
+
+ffi.cdef[[
+typedef unsigned short WORD;
+typedef unsigned long DWORD;
+
+typedef struct _FILETIME {
+  DWORD dwLowDateTime;
+  DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+
+typedef struct _SYSTEMTIME {
+  WORD wYear;
+  WORD wMonth;
+  WORD wDayOfWeek;
+  WORD wDay;
+  WORD wHour;
+  WORD wMinute;
+  WORD wSecond;
+  WORD wMilliseconds;
+} SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
+
+void GetSystemTimeAsFileTime(
+  LPFILETIME lpSystemTimeAsFileTime
+);
+
+void GetSystemTimePreciseAsFileTime(
+  LPFILETIME lpSystemTimeAsFileTime
+);
+
+void GetSystemTime(
+  LPSYSTEMTIME lpSystemTime
+);
+
+void GetLocalTime(
+  LPSYSTEMTIME lpSystemTime
+);
+]]
+
+windows.epoch = date(1601, 1, 1, 0, 0, 0, 0)
+function windows.get_datetime()
+    local filetime = ffi.new('FILETIME[1]')
+    ffi.C.GetSystemTimeAsFileTime(filetime)
+    local low = tonumber(filetime[0].dwLowDateTime)
+    local high = tonumber(filetime[0].dwHighDateTime)
+    return date(windows.epoch):addticks((high * 0x100000000 + low) / 10)
+end
 
 return windows

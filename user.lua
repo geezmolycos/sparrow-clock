@@ -128,21 +128,36 @@ user.config = {
             end,
         }
     },
-    window_display = 2,
-    window_pos_x = 2560,
-    window_pos_y = 0,
-    window_snap_x = 16,
-    window_snap_y = 16,
-    window_anchor_x = 'right',
+    window_display = 1,
+    window_pos_x = 100,
+    window_pos_y = 100,
+    window_anchor_x = 'left',
     window_anchor_y = 'top',
+    window_borderless = true,
+    windows_snap_x = 16,
+    windows_snap_y = 16,
+    windows_bottom = false,
+    windows_transparent = true,
+    windows_hide_taskbar = true,
     mouse_moved_active = 1,
     mouse_pressed_active = 1,
     event_update_rate = 18,
     graphics_update_rate = 6
 }
 
-user.window_width = user.config.cols * user.config.grid_size
-user.window_height = user.config.rows * user.config.grid_size
+function user.grids(n)
+    if type(n) == 'table' then
+        local new_n = {}
+        for i, it in ipairs(n) do
+            table.insert(new_n, it * user.config.grid_size)
+        end
+        return new_n
+    end
+    return n * user.config.grid_size
+end
+
+user.window_width = user.grids(user.config.cols)
+user.window_height = user.grids(user.config.rows)
 if user.config.window_anchor_x == 'middle' then
     user.window_x = user.config.window_pos_x - math.floor(user.window_width / 2)
 elseif user.config.window_anchor_x == 'right' then
@@ -158,10 +173,35 @@ else
     user.window_y = user.config.window_pos_y
 end
 
-user.window_snap_offset_x = user.window_x % user.config.window_snap_x
-user.window_snap_offset_y = user.window_y % user.config.window_snap_y
+user.windows_snap_offset_x = user.window_x % user.config.windows_snap_x
+user.windows_snap_offset_y = user.window_y % user.config.windows_snap_y
 
 user.event_delay = 1 / user.config.event_update_rate
 user.graphics_n = math.floor(user.config.event_update_rate / user.config.graphics_update_rate)
+
+-- for debugging
+user.time_offset = 0
+user.time_rate = 1
+function user.log(...) return end
+if arg[2] == 'debug' then
+    user.debug = true
+    user.debug_display = true
+    local inspect = require "inspect"
+    function user.log(...)
+        local date_str = os.date('%Y-%m-%d %H:%M:%S', os.time())
+        for i, item in ipairs({...}) do
+            if i == 1 then
+                print('[' .. date_str .. '] ')
+            else
+                print(string.rep(' ', string.len(date_str) + 3))
+            end
+            if type(item) == 'string' then
+                print(item)
+            else
+                print(inspect(item))
+            end
+        end
+    end
+end
 
 return user
