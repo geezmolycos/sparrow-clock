@@ -291,10 +291,10 @@ function windows.init(user, hittest)
     else
         windows.set_top(hwnd)
     end
-    if windows_hide_taskbar then
+    if user.config.windows_hide_taskbar then
         local status, err = windows.hide_taskbar(hwnd)
         if not status then
-            print("error hiding taskbar")
+          user.log("error hiding taskbar", err)
         end
     end
     love.graphics.setBackgroundColor(0, 0, 0, 0)

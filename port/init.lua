@@ -1,6 +1,10 @@
 
-local ffi = require "ffi"
 local user = require "user"
+local status, ffi = pcall(require, "ffi")
+if not status then
+    user.log("No FFI module available")
+    return require "port.dummy"
+end
 
 user.log("FFI reported OS: ", ffi.os)
 if ffi.os == "Windows" then
