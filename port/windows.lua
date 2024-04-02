@@ -65,6 +65,13 @@ typedef struct _DWM_BLURBEHIND {
   BOOL  fTransitionOnMaximized;
 } DWM_BLURBEHIND, *PDWM_BLURBEHIND;
 
+typedef struct tagMONITORINFO {
+  DWORD cbSize;
+  RECT  rcMonitor;
+  RECT  rcWork;
+  DWORD dwFlags;
+} MONITORINFO, *LPMONITORINFO;
+
 HWND GetActiveWindow(
 
 );
@@ -143,6 +150,11 @@ HRESULT DwmEnableBlurBehindWindow(
 
 BOOL SetProcessDPIAware();
 
+BOOL GetMonitorInfoA(
+  HMONITOR      hMonitor,
+  LPMONITORINFO lpmi
+);
+
 ]]
 
 -- use DwmEnableBlurBehindWindow which works on modern windows
@@ -161,9 +173,49 @@ function windows.set_transparent(hwnd)
     if result == 0 then return true else return false, result end
 end
 
+function windows.prevent_out_of_bound(hwnd)
+    local rect = ffi.new('RECT[1]')
+    local result = ffi.C.GetWindowRect(hwnd, rect)
+    if result == 0 then
+        return false, ffi.C.GetLastError()
+    end
+    local x = rect[0].left
+    local y = rect[0].top
+    local cx = rect[0].right - rect[0].left
+    local cy = rect[0].bottom - rect[0].top
+    if not (ffi.C.MonitorFromPoint({x = x, y = y}, 0) == nil
+    or ffi.C.MonitorFromPoint({x = x + cx - 1, y = y}, 0) == nil
+    or ffi.C.MonitorFromPoint({x = x, y = y + cy - 1}, 0) == nil
+    or ffi.C.MonitorFromPoint({x = x + cx - 1, y = y + cy - 1}, 0) == nil) then
+        return -- is in bound
+    end
+    -- get nearest monitor
+    local hmonitor = ffi.C.MonitorFromPoint({x = x + cx / 2, y = y + cy / 2}, 2) -- MONITOR_DEFAULTTONEAREST
+    local monitorinfo = ffi.new("MONITORINFO[1]")
+    monitorinfo[0].cbSize = ffi.sizeof("MONITORINFO")
+    local result = ffi.C.GetMonitorInfoA(hmonitor, monitorinfo)
+    if result == 0 then
+        return false, ffi.C.GetLastError()
+    end
+    local target_rect = monitorinfo[0].rcWork
+    if x < target_rect.left then
+        x = target_rect.left
+    end
+    if x + cx > target_rect.right then
+        x = target_rect.right - cx
+    end
+    if y < target_rect.top then
+        y = target_rect.top
+    end
+    if y + cy > target_rect.bottom then
+        y = target_rect.bottom - cy
+    end
+    ffi.C.SetWindowPos(hwnd, nil, x, y, cx, cy,0x0214) -- SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOZORDER
+end
+
 function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData)
     if uMsg == 0x0082 then -- WM_NCDESTROY
-        comctl32.RemoveWindowSubclass(hWnd, window.subclass_window_proc_cb, uIdSubclass)
+        comctl32.RemoveWindowSubclass(hWnd, windows.subclass_window_proc_cb, uIdSubclass)
     elseif uMsg == 0x0046 then -- WM_WINDOWPOSCHANGING
         local windowpos = ffi.cast("WINDOWPOS*", lParam)
         if windows.at_bottom then
@@ -196,7 +248,6 @@ function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, d
             local rect = ffi.new('RECT[1]')
             local result = ffi.C.GetWindowRect(hWnd, rect)
             if result == 0 then
-                print("error getting window rect")
                 return 1
             end
             x = x - rect[0].left
@@ -210,6 +261,8 @@ function windows.subclass_window_proc(hWnd, uMsg, wParam, lParam, uIdSubclass, d
             return code
         end
         return result
+    elseif uMsg == 0x007e then -- WM_DISPLAYCHANGE
+        windows.prevent_out_of_bound(hWnd)
     end
     return comctl32.DefSubclassProc(hWnd, uMsg, wParam, lParam)
 end
@@ -260,9 +313,6 @@ function windows.get_hwnd()
 end
 
 function windows.init(user, hittest)
-    if not ffi.C.SetProcessDPIAware() then
-        user.log("set dpi awareness failed")
-    end
     windows.hittest = hittest
     windows.snap_x = user.config.windows_snap_x
     windows.snap_y = user.config.windows_snap_y
